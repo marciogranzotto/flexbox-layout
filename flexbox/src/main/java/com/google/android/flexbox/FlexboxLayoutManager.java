@@ -57,7 +57,7 @@ public class FlexboxLayoutManager extends RecyclerView.LayoutManager implements 
      */
     private static final Rect TEMP_RECT = new Rect();
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     /**
      * The current value of the {@link FlexDirection}, the default value is {@link
@@ -183,6 +183,12 @@ public class FlexboxLayoutManager extends RecyclerView.LayoutManager implements 
      * The reference to the parent of the RecyclerView
      */
     private View mParent;
+
+    /**
+     * if mFillAllItemsForced == true fixes all issues with "not all items displayed when wrap_content"
+     * issues: #349 #336 #339
+     */
+    private Boolean mSetAllItemsForced = false;
 
     /**
      * Indicates the position that the view position that the flex line which has the view having
@@ -315,6 +321,14 @@ public class FlexboxLayoutManager extends RecyclerView.LayoutManager implements 
             mSubOrientationHelper = null;
             requestLayout();
         }
+    }
+
+    public Boolean getAllItemsForced() {
+        return mSetAllItemsForced;
+    }
+
+    public void setAllItemsForced(Boolean allItemsForced) {
+        this.mSetAllItemsForced = allItemsForced;
     }
 
     @JustifyContent
@@ -935,7 +949,7 @@ public class FlexboxLayoutManager extends RecyclerView.LayoutManager implements 
             // passed as 0 from the RecyclerView)
             // Set the upper limit as the height of the device in order to prevent computing all
             // items in the adapter
-            needsToFill = mLayoutState.mInfinite ?
+            needsToFill = mSetAllItemsForced ? Integer.MAX_VALUE : mLayoutState.mInfinite ?
                     mContext.getResources().getDisplayMetrics().heightPixels
                     : mLayoutState.mAvailable + mLayoutState.mExtra;
         } else {
@@ -946,7 +960,7 @@ public class FlexboxLayoutManager extends RecyclerView.LayoutManager implements 
             // passed as 0 from the RecyclerView)
             // Set the upper limit as the width of the device in order to prevent computing all
             // items in the adapter
-            needsToFill = mLayoutState.mInfinite ?
+            needsToFill = mSetAllItemsForced ? Integer.MAX_VALUE : mLayoutState.mInfinite ?
                     mContext.getResources().getDisplayMetrics().widthPixels
                     : mLayoutState.mAvailable + mLayoutState.mExtra;
         }

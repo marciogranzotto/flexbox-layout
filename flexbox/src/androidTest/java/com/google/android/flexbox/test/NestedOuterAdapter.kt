@@ -31,9 +31,10 @@ import com.google.android.flexbox.FlexboxLayoutManager
 internal class NestedOuterAdapter(
         @param:FlexDirection private val flexDirection: Int, private val innerAdapterItemCount: Int,
         @param:LayoutRes private val viewHolderResId: Int
-) : RecyclerView.Adapter<NestedOuterAdapter.OuterViewHolder>() {
+): RecyclerView.Adapter<NestedOuterAdapter.OuterViewHolder>() {
 
     private val viewHolderList = mutableListOf<OuterViewHolder>()
+    var allInnerItemsForced = false
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OuterViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(viewHolderResId, parent, false)
@@ -45,6 +46,7 @@ internal class NestedOuterAdapter(
     override fun onBindViewHolder(holder: OuterViewHolder, position: Int) {
         val layoutManager = FlexboxLayoutManager(holder.itemView.context)
         layoutManager.flexDirection = flexDirection
+        layoutManager.allItemsForced = allInnerItemsForced
         holder.innerRecyclerView.layoutManager = layoutManager
         holder.innerRecyclerView.adapter = NestedInnerAdapter(position, innerAdapterItemCount)
     }
@@ -53,7 +55,7 @@ internal class NestedOuterAdapter(
 
     override fun getItemCount() = ITEM_COUNT
 
-    internal class OuterViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    internal class OuterViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         val innerRecyclerView: RecyclerView = itemView.findViewById(R.id.recyclerview_inner)
     }
 

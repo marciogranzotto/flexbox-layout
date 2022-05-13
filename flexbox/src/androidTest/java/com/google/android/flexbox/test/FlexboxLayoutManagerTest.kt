@@ -26,31 +26,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewAction
-import androidx.test.espresso.action.CoordinatesProvider
-import androidx.test.espresso.action.GeneralLocation
-import androidx.test.espresso.action.GeneralSwipeAction
-import androidx.test.espresso.action.Press
-import androidx.test.espresso.action.Swipe
+import androidx.test.espresso.action.*
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.FlakyTest
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
-import com.google.android.flexbox.AlignItems
-import com.google.android.flexbox.AlignSelf
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.FlexboxItemDecoration
+import com.google.android.flexbox.*
 import com.google.android.flexbox.FlexboxItemDecoration.HORIZONTAL
 import com.google.android.flexbox.FlexboxItemDecoration.VERTICAL
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
 import com.google.android.flexbox.test.IsEqualAllowingError.Companion.isEqualAllowingError
-import org.hamcrest.Matchers.`is`
-import org.hamcrest.Matchers.instanceOf
-import org.hamcrest.Matchers.lessThan
-import org.hamcrest.Matchers.notNullValue
+import org.hamcrest.Matchers.*
 import org.hamcrest.core.IsNot.not
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
@@ -2813,6 +2800,47 @@ class FlexboxLayoutManagerTest {
     @Test
     @FlakyTest
     @Throws(Throwable::class)
+    fun testNestedRecyclerViews_both_flex_direction_row() {
+        // This test verifies the nested RecyclerViews.
+        // The outer RecyclerView scrolls vertical using LinearLayoutManager.
+        // The inner RecyclerViews use FlexboxLayoutManager with flexDirection == ROW and
+        // height of the RecyclerView is set to "wrap_content", which before fixing
+        // https://github.com/google/flexbox-layout/issues/208, the height of the inner
+        // RecyclerViews were set to 0.
+        val activity = activityRule.activity
+        val outerLayoutManager = FlexboxLayoutManager(activity, FlexDirection.ROW)
+
+        // Give the inner adapter item count enough so that inner RecyclerView with
+        // FlexboxLayoutManager wraps its items
+        val innerAdapterItemCount = 600
+        val adapter = NestedOuterAdapter(FlexDirection.ROW,
+                innerAdapterItemCount, R.layout.viewholder_inner_recyclerview)
+        adapter.allInnerItemsForced = true
+        activityRule.runOnUiThread {
+            activity.setContentView(R.layout.recyclerview)
+            val recyclerView = activity.findViewById<RecyclerView>(R.id.recyclerview)
+            val params = recyclerView.layoutParams
+            params.width = RecyclerView.LayoutParams.MATCH_PARENT
+            params.height = RecyclerView.LayoutParams.MATCH_PARENT
+            recyclerView.layoutParams = params
+            recyclerView.layoutManager = outerLayoutManager
+            recyclerView.adapter = adapter
+        }
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        val viewHolder = adapter.getViewHolder(0)
+        val innerRecyclerView = viewHolder.innerRecyclerView
+        assertThat(innerRecyclerView.height, `is`(not(0)))
+
+        // This assertion verifies that inner RecyclerView displays the entire items including
+        // wrapped lines to verify the issue that nested RecyclerView with FlexboxLayoutManager
+        // only displayed one line https://github.com/google/flexbox-layout/issues/290
+        assertThat((innerRecyclerView.layoutManager as FlexboxLayoutManager).findLastVisibleItemPosition(),
+                `is`(innerAdapterItemCount - 1))
+    }
+
+    @Test
+    @FlakyTest
+    @Throws(Throwable::class)
     fun testNestedRecyclerViews_direction_column() {
         // This test verifies the nested RecyclerViews.
         // The outer RecyclerView scrolls horizontally using LinearLayoutManager.
@@ -3445,7 +3473,7 @@ class FlexboxLayoutManagerTest {
             }
         }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        val view1Bottom= layoutManager.getChildAt(0)!!.bottom
+        val view1Bottom = layoutManager.getChildAt(0)!!.bottom
         val view2Bottom = layoutManager.getChildAt(1)!!.bottom
         val view3Bottom = layoutManager.getChildAt(2)!!.bottom
         assertThat(view1Bottom, `is`(activity.dpToPixel(height)))
@@ -3476,7 +3504,7 @@ class FlexboxLayoutManagerTest {
             }
         }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        val view1Right= layoutManager.getChildAt(0)!!.right
+        val view1Right = layoutManager.getChildAt(0)!!.right
         val view2Right = layoutManager.getChildAt(1)!!.right
         val view3Right = layoutManager.getChildAt(2)!!.right
         assertThat(view1Right, `is`(activity.dpToPixel(width)))
