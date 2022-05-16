@@ -57,7 +57,7 @@ public class FlexboxLayoutManager extends RecyclerView.LayoutManager implements 
      */
     private static final Rect TEMP_RECT = new Rect();
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     /**
      * The current value of the {@link FlexDirection}, the default value is {@link
